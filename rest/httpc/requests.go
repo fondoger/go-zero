@@ -143,7 +143,7 @@ func fillPath(u *nurl.URL, val map[string]any) error {
 			delete(val, key)
 		}
 
-		var unused []string
+		unused := make([]string, 0, len(val))
 		for key := range val {
 			unused = append(unused, key)
 		}
@@ -156,12 +156,13 @@ func fillPath(u *nurl.URL, val map[string]any) error {
 }
 
 func request(r *http.Request, cli client) (*http.Response, error) {
-	tracer := otel.Tracer(trace.TraceName)
+	ctx := r.Context()
+	tracer := trace.TracerFromContext(ctx)
 	propagator := otel.GetTextMapPropagator()
 
 	spanName := r.URL.Path
 	ctx, span := tracer.Start(
-		r.Context(),
+		ctx,
 		spanName,
 		oteltrace.WithSpanKind(oteltrace.SpanKindClient),
 		oteltrace.WithAttributes(semconv.HTTPClientAttributesFromHTTPRequest(r)...),

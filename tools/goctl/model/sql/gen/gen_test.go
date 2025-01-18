@@ -3,7 +3,6 @@ package gen
 import (
 	"database/sql"
 	_ "embed"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/builder"
 	"github.com/zeromicro/go-zero/core/stringx"
@@ -30,7 +28,7 @@ func TestCacheModel(t *testing.T) {
 	_ = Clean()
 
 	sqlFile := filepath.Join(pathx.MustTempDir(), "tmp.sql")
-	err := ioutil.WriteFile(sqlFile, []byte(source), 0o777)
+	err := os.WriteFile(sqlFile, []byte(source), 0o777)
 	assert.Nil(t, err)
 
 	dir := filepath.Join(pathx.MustTempDir(), "./testmodel")
@@ -65,7 +63,7 @@ func TestNamingModel(t *testing.T) {
 	_ = Clean()
 
 	sqlFile := filepath.Join(pathx.MustTempDir(), "tmp.sql")
-	err := ioutil.WriteFile(sqlFile, []byte(source), 0o777)
+	err := os.WriteFile(sqlFile, []byte(source), 0o777)
 	assert.Nil(t, err)
 
 	dir, _ := filepath.Abs("./testmodel")
@@ -103,7 +101,7 @@ func TestFolderName(t *testing.T) {
 	_ = Clean()
 
 	sqlFile := filepath.Join(pathx.MustTempDir(), "tmp.sql")
-	err := ioutil.WriteFile(sqlFile, []byte(source), 0o777)
+	err := os.WriteFile(sqlFile, []byte(source), 0o777)
 	assert.Nil(t, err)
 
 	dir, _ := filepath.Abs("./testmodel")
@@ -179,7 +177,7 @@ func Test_genPublicModel(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	modelFilename := filepath.Join(modelDir, "foo.sql")
-	err = ioutil.WriteFile(modelFilename, []byte(source), 0o777)
+	err = os.WriteFile(modelFilename, []byte(source), 0o777)
 	require.NoError(t, err)
 
 	g, err := NewDefaultGenerator(modelDir, &config.Config{
@@ -193,7 +191,10 @@ func Test_genPublicModel(t *testing.T) {
 	code, err := g.genModelCustom(*tables[0], false)
 	assert.NoError(t, err)
 	assert.True(t, strings.Contains(code, "package model"))
-	assert.True(t, strings.Contains(code, "TestUserModel interface {\n\t\ttestUserModel\n\t}\n"))
+	assert.True(t, strings.Contains(code, `	TestUserModel interface {
+		testUserModel
+		withSession(session sqlx.Session) TestUserModel
+	}`))
 	assert.True(t, strings.Contains(code, "customTestUserModel struct {\n\t\t*defaultTestUserModel\n\t}\n"))
 	assert.True(t, strings.Contains(code, "func NewTestUserModel(conn sqlx.SqlConn) TestUserModel {"))
 }
